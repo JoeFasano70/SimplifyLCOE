@@ -1,0 +1,138 @@
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplify LCOE solar calculator</title>
+    <style>
+        body { background-color: #f4e8c1; font-family: Arial, sans-serif; padding: 20px; }
+        h1 { text-align: center; font-weight: bold; }
+        .container { display: flex; justify-content: space-between; margin-top: 20px; }
+        .box { flex: 1; padding: 20px; border: 1px solid black; margin: 0 10px; }
+        label { display: block; margin-bottom: 10px; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; margin-top: 20px; width: 100%; }
+        .result { margin-top: 20px; font-weight: bold; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Semplify LCOE cost calculation</h1>
+    <div class="container">
+        <div class="box">
+            <h2>CAPEX & OPEX</h2>
+            <label for="capex">PLANT CAPEX (€)</label>
+            <input type="number" id="capex" placeholder="Es: 1200000">
+            <label for="maintenance">Ordinary maintenance cost (€)</label>
+            <input type="number" id="maintenance" placeholder="Es: 20000">
+            <label for="insurance">Annual Insurance cost (€)</label>
+            <input type="number" id="insurance" placeholder="Es: 15000">
+            <label for="extraMaintenance">Extraordinari maintenance cost (€)</label>
+            <input type="number" id="extraMaintenance" placeholder="Es: 50000">
+        </div>
+        <div class="box">
+            <h2>PARAMETER</h2>
+            <label for="power">Peak power plant in kW</label>
+            <input type="number" id="power" placeholder="Es: 1200">
+            <label for="efficiency">Annual Efficiency in kWh/kWp</label>
+            <input type="number" id="efficiency" placeholder="Es: 1150">
+            <label for="yearsLCOE">Years LCOE</label>
+            <select id="yearsLCOE">
+                <option value="25">25</option>
+                <option value="30">30</option>
+            </select>
+            <label for="inflation">Annual Inflation (%)</label>
+            <select id="inflation">
+                <option value="1">1%</option>
+                <option value="2">2%</option>
+                <option value="3">3%</option>
+                <option value="4">4%</option>
+                <option value="5">5%</option>
+                <option value="6">6%</option>
+                <option value="7">7%</option>
+                <option value="8">8%</option>
+                <option value="9">9%</option>
+                <option value="10">10%</option>
+            </select>
+            <label for="loss">Annual power plant losses (%)</label>
+            <select id="loss">
+                <option value="0.5">0.5%</option>
+                <option value="1.0">1.0%</option>
+                <option value="1.5">1.5%</option>
+                <option value="2.0">2.0%</option>
+                <option value="2.5">2.5%</option>
+            </select>
+            <button type="button">Calculate</button>
+        </div>
+    </div>
+    <div class="result" id="result"></div>
+<!-- Aggiungi il seguente div per il messaggio "Powered By" -->
+<div style="text-align: center; margin-top: 20px;">
+    Powered By <a href="https://sentnet.it/en" target="_blank">Sentnet Engineering</a>
+</div>
+<script>
+document.querySelector('button').addEventListener('click', function() {
+    // Ottieni i valori dai campi di input
+    const capex = document.getElementById('capex').value;
+    const maintenance = document.getElementById('maintenance').value;
+    const insurance = document.getElementById('insurance').value;
+    const extraMaintenance = document.getElementById('extraMaintenance').value;
+    const power = document.getElementById('power').value;
+    const efficiency = document.getElementById('efficiency').value;
+    const yearsLCOE = document.getElementById('yearsLCOE').value;
+    const inflation = document.getElementById('inflation').value / 100;
+    const loss = document.getElementById('loss').value / 100;
+
+    // Calcoli preliminari per il LCOE
+    const totalCapex = parseFloat(capex);
+    const totalOPEX = ((parseFloat(maintenance) + parseFloat(insurance) + parseFloat(extraMaintenance)) * yearsLCOE) * (1 + inflation);
+    const totalProduction = (parseFloat(power) * parseFloat(efficiency) * parseFloat(yearsLCOE)) * (1 - loss);
+
+    // Calcolo LCOE
+    const lcoe = (totalCapex + totalOPEX) / totalProduction;
+
+    // Mostra il Marchio
+    document.getElementById('result').innerHTML = `Powerd By Sentnet Engineering`;
+
+    // Calcoli aggiuntivi per la tabella
+    const years = parseInt(yearsLCOE, 10); // Assicurati che sia un numero intero
+    let opexOrdinaria = parseFloat(maintenance);
+    let costiAssicurativi = parseFloat(insurance);
+    let produzioneEnergia = parseFloat(power) * parseFloat(efficiency);
+    let totaleCostiProgressivo = totalCapex + parseFloat(extraMaintenance);
+    let totaleEnergiaProdotta = produzioneEnergia;
+
+    // Apri una nuova finestra per la tabella
+    let newWindow = window.open("", "LCOE Table", "width=800,height=600");
+    newWindow.document.write("<title>LCOE Table</title>");
+    newWindow.document.write("<h1>LCOE Table</h1>");
+    newWindow.document.write("<table border='1'><tr><th>Year</th><th>CAPEX</th><th>OPEX ordinary</th><th>Insurance</th><th>OPEX Straordinary</th><th>Energy production</th><th>Total cost (progressive)</th><th>Total energy production</th><th>LCOE (EUR/kWh)</th></tr>");
+
+    for (let anno = 1; anno <= years; anno++) {
+    let capexDisplay = anno === 1 ? capex : "-";
+    let opexStraordinariaDisplay = anno === 1 ? extraMaintenance : "-";
+    if (anno > 1) {
+        opexOrdinaria *= (1 + inflation);
+        costiAssicurativi *= (1 + inflation);
+        produzioneEnergia *= (1 - loss);
+        totaleCostiProgressivo += opexOrdinaria + costiAssicurativi;
+        totaleEnergiaProdotta += produzioneEnergia;
+    }
+    let lcoeAnnuo = totaleCostiProgressivo / totaleEnergiaProdotta;
+
+    newWindow.document.write(`<tr>
+        <td>${anno}</td>
+        <td>${capexDisplay}</td>
+        <td>${opexOrdinaria.toFixed(2)}</td>
+        <td>${costiAssicurativi.toFixed(2)}</td>
+        <td>${opexStraordinariaDisplay}</td>
+        <td>${produzioneEnergia.toFixed(2)}</td>
+        <td>${totaleCostiProgressivo.toFixed(2)}</td>
+        <td>${totaleEnergiaProdotta.toFixed(2)}</td>
+        <td>${lcoeAnnuo.toFixed(3)}</td>
+    </tr>`);
+}
+newWindow.document.write("</table>");
+newWindow.document.close(); // Chiude il documento per renderlo visibile
+	});
+</script>
+</body>
+</html>
